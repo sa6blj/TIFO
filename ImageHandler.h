@@ -1,0 +1,1 @@
+void updateImage(float pos);

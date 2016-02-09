@@ -1,0 +1,2 @@
+void inputInterpreterInit();
+void updatePosition();
