@@ -18,7 +18,7 @@ static time_t timeSinceTurn;
 static int dir;
 static float speed;
 
-void inputInterpeterInit() {
+void inputInterpreterInit() {
 	lastUpdate = time(0);
 	lastPeriodTime = time(0);
 	timeSinceTurn = time(0);
@@ -28,7 +28,7 @@ void inputInterpeterInit() {
 
 void updatePosition() {
 	float accel = getAccel();
-	timeDiff = time(0) - lastUpdate;
+	time_t timeDiff = time(0) - lastUpdate;
 	timeSinceTurn += timeDiff;
 	speed += accel*timeDiff;
 	if (dir && speed < 0) {
@@ -44,4 +44,5 @@ void updatePosition() {
 
 float getAccel() {
 	//TODO Implement
+	return 0;
 }

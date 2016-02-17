@@ -15,8 +15,8 @@ char text[32] = {0x00, 0x80, 0x80, 0xff, 0x80, 0x80, 0x00, 		   //T
 //freuency
 int main(void) {
 	inputInterpreterInit();
-	while (true){
-		updatePosition()
+	while (1){
+		updatePosition();
 		//sleep(1/frequecy)
 	}
 	return 0;
