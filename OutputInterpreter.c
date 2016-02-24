@@ -25,9 +25,16 @@ GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1 |
 */
 
 
+
+// I think I got this figured out. Gonna fix the correct port chars and
+// pin numbers after talking to V. She wasn't sure today. /J
+
+
 void updateOutputs(int col) {
 	/*
-	 * void GPIOPinWrite (uint32_t ui32Port, uint)
+	 * Usage of GPIOPinWrite:
+	 *
+	 * GPIOPinWrite([Base address to chosen port], ([List of pins to write to]), [Value to print]);
 	 *
 	 *
 	 */
