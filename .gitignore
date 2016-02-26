@@ -32,3 +32,4 @@
 # Debug files
 Debug/
 *.dSYM/
+main.c
