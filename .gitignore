@@ -3,6 +3,7 @@
 *.ko
 *.obj
 *.elf
+*.pp
 
 # Precompiled Headers
 *.gch
@@ -29,5 +30,6 @@
 *.hex
 
 # Debug files
+Debug/
 *.dSYM/
 main.c
