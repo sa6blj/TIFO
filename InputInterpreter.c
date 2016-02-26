@@ -30,7 +30,7 @@ void inputInterpreterInit() {
 	lastHalfPeriodTime = time(0);
 	timeSinceTurn = time(0);
 	lastTurnTime = time(0); //FIXME Temporary for setting a static period time
-	halfPeriodTime = 200; //FIXME Temporary for setting a static period time
+	halfPeriodTime = 20; //FIXME Temporary for setting a static period time
 	dir = 1;
 	speed = 0;
 }
@@ -86,6 +86,6 @@ void updateFakePosition() {
 		dir = 1-dir;
 		lastTurnTime = time(0);
 	}
-	float position = timeSinceTurn/halfPeriodTime;
+	float position = timeSinceTurn/((float)halfPeriodTime);
 	updateImage( dir ? position : (1-position) );
 }
