@@ -46,7 +46,7 @@
 #define led10 GPIO_PIN_2
 
 // Init port for read and write
-void InitOutput(void){
+void initOutputs(void){
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);

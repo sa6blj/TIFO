@@ -15,12 +15,13 @@ static int img[TIFO_LEN] = {0x00, 0x80, 0x80, 0xff, 0x80, 0x80, 0x00,      //T
                             0x00, 0xfb, 0xfb, 0x00};                       //!
 static int lastIndex = 0;
 
-
+void initImageHandler(){
+	initOutputs();
+}
 /*
  * This function determines which part of the image or message to print out.
  * Also sends the determined column to the updateOutputs function.
  */
-
 void updateImage(float pos) {
 	// Compute which column to print
 	int currIndex = pos*TIFO_LEN;

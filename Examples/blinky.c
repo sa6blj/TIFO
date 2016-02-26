@@ -97,7 +97,7 @@ __error__(char *pcFilename, uint32_t ui32Line)
 //
 //*****************************************************************************
 int
-main(void)
+main2(void)
 {
     //
     // Setup the system clock to run at 50 Mhz from PLL with crystal reference

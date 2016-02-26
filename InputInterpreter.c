@@ -11,7 +11,6 @@
 #include "ImageHandler.h"
 
 static float getAccel();
-static void updateFakePosition();
 
 static time_t lastUpdate;
 static time_t lastHalfPeriodTime;
@@ -26,6 +25,7 @@ static time_t halfPeriodTime; //FIXME Temporary for setting a static period time
  * Init function which starts timers and sets the start direction
  */
 void inputInterpreterInit() {
+	initImageHandler();
 	lastUpdate = time(0);
 	lastHalfPeriodTime = time(0);
 	timeSinceTurn = time(0);
