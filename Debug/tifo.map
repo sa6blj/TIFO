@@ -1,7 +1,7 @@
 ******************************************************************************
                   TI ARM Linker PC v5.2.5                      
 ******************************************************************************
->> Linked Wed Feb 17 16:49:15 2016
+>> Linked Fri Feb 26 14:18:47 2016
 
 OUTPUT FILE NAME:   <TIFO.out>
 ENTRY POINT SYMBOL: "_c_int00"  address: 0000225d
@@ -76,10 +76,10 @@ section   page    origin      length       input sections
                   00002908    00000008     sysctl.obj (.const)
 
 .cinit     0    00002910    00000038     
-                  00002910    0000000f     (.cinit..data.load) [load image, compression = rle]
-                  0000291f    00000001     --HOLE-- [fill = 0]
-                  00002920    0000000c     (__TI_handler_table)
-                  0000292c    00000004     --HOLE-- [fill = 0]
+                  00002910    0000000c     (__TI_handler_table)
+                  0000291c    00000004     --HOLE-- [fill = 0]
+                  00002920    00000009     (.cinit..data.load) [load image, compression = rle]
+                  00002929    00000007     --HOLE-- [fill = 0]
                   00002930    00000008     (.cinit..vtable.load) [load image, compression = zero_init]
                   00002938    00000010     (__TI_cinit_table)
 
@@ -104,13 +104,13 @@ section   page    origin      length       input sections
 LINKER GENERATED COPY TABLES
 
 __TI_cinit_table @ 00002938 records: 2, size/record: 8, table size: 16
-	.data: load addr=00002910, load size=0000000f bytes, run addr=2000046c, run size=00000014 bytes, compression=rle
+	.data: load addr=00002920, load size=00000009 bytes, run addr=2000046c, run size=00000014 bytes, compression=rle
 	.vtable: load addr=00002930, load size=00000008 bytes, run addr=20000000, run size=0000026c bytes, compression=zero_init
 
 
 LINKER GENERATED HANDLER TABLE
 
-__TI_handler_table @ 00002920 records: 3, size/record: 4, table size: 12
+__TI_handler_table @ 00002910 records: 3, size/record: 4, table size: 12
 	index: 0, handler: __TI_zero_init
 	index: 1, handler: __TI_decompress_rle24
 	index: 2, handler: __TI_decompress_none
@@ -252,8 +252,8 @@ UNDEFED   SHT$$INIT_ARRAY$$Limit
 2000046c  __STACK_TOP                     
 00002938  __TI_CINIT_Base                 
 00002948  __TI_CINIT_Limit                
-00002920  __TI_Handler_Table_Base         
-0000292c  __TI_Handler_Table_Limit        
+00002910  __TI_Handler_Table_Base         
+0000291c  __TI_Handler_Table_Limit        
 00002185  __TI_auto_init                  
 20000474  __TI_cleanup_ptr                
 000023f1  __TI_decompress_none            
@@ -450,8 +450,8 @@ address   name
 00002417  SysCtlDelay                     
 0000241d  __TI_decompress_rle24           
 00002423  _system_pre_init                
-00002920  __TI_Handler_Table_Base         
-0000292c  __TI_Handler_Table_Limit        
+00002910  __TI_Handler_Table_Base         
+0000291c  __TI_Handler_Table_Limit        
 00002938  __TI_CINIT_Base                 
 00002948  __TI_CINIT_Limit                
 20000000  g_pfnRAMVectors                 
