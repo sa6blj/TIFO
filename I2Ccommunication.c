@@ -94,7 +94,8 @@ void I2CSend(uint8_t slave_addr, uint8_t num_of_args)
 
         //send num_of_args-2 pieces of data, using the
         //BURST_SEND_CONT command of the I2C module
-        for(uint8_t i = 1; i < (num_of_args - 1); i++)
+        uint8_t i = 1;
+        for(i = 1; i < (num_of_args - 1); i++)
         {
             //put next piece of data into I2C FIFO
             I2CMasterDataPut(I2C0_BASE, va_arg(vargs, uint32_t));
