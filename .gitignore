@@ -30,6 +30,8 @@
 *.hex
 
 # Debug files
-Debug/
+Debug/*
 *.dSYM/
-main.c
+
+# Eclipse stuff
+.settings/*
