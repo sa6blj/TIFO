@@ -6,11 +6,12 @@
  */
 
 #include <time.h>
-
+#include <stdint.h>
+#include "I2Ccommunications.h"
 #include "InputInterpreter.h"
 #include "ImageHandler.h"
 
-static float getAccel();
+static uint8_t getAccel();
 
 static time_t lastUpdate;
 static time_t lastHalfPeriodTime;
@@ -75,8 +76,9 @@ void updatePosition() {
  * This function reads a accelerometer value and returns it as a float value.
  */
 
-float getAccel() {
+uint8_t getAccel() {
 	//TODO Implement
+	//return I2CReceive(slaveAddress, reg);
 	return 0;
 }
 
