@@ -43,7 +43,7 @@
 /* These pins are part of Port F */
 #define led0  GPIO_PIN_4
 #define led8  GPIO_PIN_3
-#define led9 GPIO_PIN_2
+#define led9  GPIO_PIN_2
 
 // Init port for read and write
 void initOutputs(void){
@@ -54,6 +54,11 @@ void initOutputs(void){
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
 
+	//Unlocks D7 which is locked for specific NMI functionality
+	while(!(SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOD)));
+	HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY;
+	HWREG(GPIO_PORTD_BASE+GPIO_O_CR) |= GPIO_PIN_7;
+
 	// Init Port A and B as outputs
 	GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5);
 	GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_2 | GPIO_PIN_3);
@@ -63,48 +68,54 @@ void initOutputs(void){
 	GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4);
 }
 
-void updateOutputs(int col) {
+void updateOutputs(unsigned int col) {
 	/*
 	 * Usage of GPIOPinWrite:
 	 *
 	 * GPIOPinWrite([Base address to chosen port], ([List of pins to write to]), [Value to print]);
 	 */
-	GPIOPinWrite(GPIO_PORTF_BASE,(led0), led0 & (col<<4));
-	GPIOPinWrite(GPIO_PORTD_BASE,(led1), led1 & (col<<6));	//Paj
-	GPIOPinWrite(GPIO_PORTD_BASE,(led2), led2 & (col<<4));
-	GPIOPinWrite(GPIO_PORTC_BASE,(led3), led3 & (col<<4));
-	GPIOPinWrite(GPIO_PORTC_BASE,(led4), led4 & (col<<2));
-	GPIOPinWrite(GPIO_PORTC_BASE,(led5), led5 & col);
-	GPIOPinWrite(GPIO_PORTC_BASE,(led6), led6 & (col>>2));
-	GPIOPinWrite(GPIO_PORTB_BASE,(led7), led7 & (col>>4));
-	GPIOPinWrite(GPIO_PORTF_BASE,(led8), led8 & (col>>5));
-	GPIOPinWrite(GPIO_PORTF_BASE,(led9), led9 & (col>>7));
-	GPIOPinWrite(GPIO_PORTA_BASE,(led10), led10 & (col>>8));
-	GPIOPinWrite(GPIO_PORTA_BASE,(led11), led11 & (col>>8));
-	GPIOPinWrite(GPIO_PORTA_BASE,(led12), led12 & (col>>8));
-	GPIOPinWrite(GPIO_PORTE_BASE,(led13), led13 & (col>>13));
-	GPIOPinWrite(GPIO_PORTB_BASE,(led14), led14 & (col>>12));
-	GPIOPinWrite(GPIO_PORTA_BASE,(led15), led15 & (col>>10));
-/*
-	GPIOPinWrite(GPIO_PORTD_BASE,(led1), 0);	//Paj
-	GPIOPinWrite(GPIO_PORTD_BASE,(led1), led1);	//Paj
+	/*
+	GPIOPinWrite(GPIO_PORTF_BASE,(led0), led0 & (col<<4));							//F
+	GPIOPinWrite(GPIO_PORTD_BASE,(led1), led1 & (col<<6));					//D
+	GPIOPinWrite(GPIO_PORTD_BASE,(led2), led2 & (col<<4));					//D
+	GPIOPinWrite(GPIO_PORTC_BASE,(led3), led3 & (col<<4));				//C
+	GPIOPinWrite(GPIO_PORTC_BASE,(led4), led4 & (col<<2));				//C
+	GPIOPinWrite(GPIO_PORTC_BASE,(led5), led5 & col);					//C
+	GPIOPinWrite(GPIO_PORTC_BASE,(led6), led6 & (col>>2));				//C
+	GPIOPinWrite(GPIO_PORTB_BASE,(led7), led7 & (col>>4));			//B
+	GPIOPinWrite(GPIO_PORTF_BASE,(led8), led8 & (col>>5));							//F
+	GPIOPinWrite(GPIO_PORTF_BASE,(led9), led9 & (col>>7));							//F
+	GPIOPinWrite(GPIO_PORTA_BASE,(led10), led10 & (col>>8));	//A
+	GPIOPinWrite(GPIO_PORTA_BASE,(led11), led11 & (col>>8));	//A
+	GPIOPinWrite(GPIO_PORTA_BASE,(led12), led12 & (col>>8));	//A
+	GPIOPinWrite(GPIO_PORTE_BASE,(led13), led13 & (col>>13));					//E
+	GPIOPinWrite(GPIO_PORTB_BASE,(led14), led14 & (col>>12));		//B
+	GPIOPinWrite(GPIO_PORTA_BASE,(led15), led15 & (col>>10));	//A
+	*/
 
-	GPIOPinWrite(GPIO_PORTC_BASE,(led6), 0);	//Paj
-	GPIOPinWrite(GPIO_PORTC_BASE,(led6), led6);	//Paj
+	int aInt = 0, bInt = 0, cInt = 0, dInt = 0, eInt = 0, fInt = 0;
 
-	GPIOPinWrite(GPIO_PORTF_BASE,(led9), 0);	//Paj
-	GPIOPinWrite(GPIO_PORTF_BASE,(led9), led9);	//Paj
+	if(col & 0x1) fInt |= led0;
+	if(col & 0x2) dInt |= led1;
+	if(col & 0x4) dInt |= led2;
+	if(col & 0x8) cInt |= led3;
+	if(col & 0x10) cInt |= led4;
+	if(col & 0x20) cInt |= led5;
+	if(col & 0x40) cInt |= led6;
+	if(col & 0x80) bInt |= led7;
+	if(col & 0x100) fInt |= led8;
+	if(col & 0x200) fInt |= led9;
+	if(col & 0x400) aInt |= led10;
+	if(col & 0x800) aInt |= led11;
+	if(col & 0x1000) aInt |= led12;
+	if(col & 0x2000) eInt |= led13;
+	if(col & 0x4000) bInt |= led14;
+	if(col & 0x8000) aInt |= led15;
 
-	GPIOPinWrite(GPIO_PORTA_BASE,(led10), 0);	//Paj
-	GPIOPinWrite(GPIO_PORTA_BASE,(led10), led10);	//Paj
-
-	GPIOPinWrite(GPIO_PORTA_BASE,(led12), 0);	//Paj
-	GPIOPinWrite(GPIO_PORTA_BASE,(led12), led12);	//Paj
-
-	GPIOPinWrite(GPIO_PORTB_BASE,(led14), 0);	//Paj
-	GPIOPinWrite(GPIO_PORTB_BASE,(led14), led14);	//Paj
-
-	GPIOPinWrite(GPIO_PORTA_BASE,(led15), 0);	//Paj
-	GPIOPinWrite(GPIO_PORTA_BASE,(led15), led15);	//Paj
-*/
+	GPIOPinWrite(GPIO_PORTA_BASE,(led10 | led11 | led12 | led15), aInt);
+	GPIOPinWrite(GPIO_PORTB_BASE,(led7 | led14), bInt);
+	GPIOPinWrite(GPIO_PORTC_BASE,(led3 | led4 | led5 | led6), cInt);
+	GPIOPinWrite(GPIO_PORTD_BASE,(led1 | led2), dInt);
+	GPIOPinWrite(GPIO_PORTE_BASE,(led13), eInt);
+	GPIOPinWrite(GPIO_PORTF_BASE,(led0 | led8 | led9), fInt);
 }

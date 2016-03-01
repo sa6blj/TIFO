@@ -7,7 +7,7 @@
 
 #include <time.h>
 #include <stdint.h>
-#include "I2Ccommunications.h"
+//#include "I2Ccommunications.h" //FIXMEThis "couldn't open"
 #include "InputInterpreter.h"
 #include "ImageHandler.h"
 
@@ -83,11 +83,14 @@ uint8_t getAccel() {
 }
 
 void updateFakePosition() {
-	timeSinceTurn = time(0) - lastTurnTime;
-	if (timeSinceTurn >= halfPeriodTime) {
-		dir = 1-dir;
-		lastTurnTime = time(0);
+	float pos = 0;
+	while(1) {
+		updateImage( dir ? pos : (1-pos) );
+		pos += 0.001;
+		if (pos > 1) {
+			dir = 1-dir;
+			pos = 0;
+		}
+		SysCtlDelay( (SysCtlClockGet()/(3*1000))*10 ); //Delays 10 ms.
 	}
-	float position = timeSinceTurn/((float)halfPeriodTime);
-	updateImage( dir ? position : (1-position) );
 }

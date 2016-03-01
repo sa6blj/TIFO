@@ -1,2 +1,2 @@
-void updateOutputs(int col);
+void updateOutputs(unsigned int col);
 void initOutputs(void);
