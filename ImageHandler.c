@@ -47,3 +47,19 @@ void updateImage(float pos) {
 		updateOutputs(img[currIndex]);
 	}
 }
+
+void accelDrawer(int val) {
+	int nbrOfLights = (((float)val)/32768)*8;
+	int pixels = 0;
+	int i = (nbrOfLights<0 ? -nbrOfLights : nbrOfLights);
+	for(i=0; i>0;i--) {
+		if (nbrOfLights<0) {
+			pixels <<= 1;
+			pixels |= 0x100;
+		} else {
+			pixels >>= 1;
+			pixels |= 0x80;
+		}
+	}
+	updateOutputs(pixels);
+}

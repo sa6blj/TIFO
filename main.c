@@ -24,7 +24,7 @@ char text[32] = {0x00, 0x80, 0x80, 0xff, 0x80, 0x80, 0x00, 		   //T
 int main(void) {
 	inputInterpreterInit();
 	while (1){
-		updateFakePosition();
+		updatePosition();
 		//sleep(1/frequecy)
 	}
 }

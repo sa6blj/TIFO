@@ -3,5 +3,6 @@
 
 void updateImage(float pos);
 void initImageHandler(void);
+void accelDrawer(int val);
 
 #endif

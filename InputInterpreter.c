@@ -7,11 +7,11 @@
 
 #include <time.h>
 #include <stdint.h>
-//#include "I2Ccommunications.h" //FIXMEThis "couldn't open"
+#include "I2Ccommunication.h"
 #include "InputInterpreter.h"
 #include "ImageHandler.h"
 
-static uint8_t getAccel();
+static int getAccel();
 
 static time_t lastUpdate;
 static time_t lastHalfPeriodTime;
@@ -27,6 +27,7 @@ static time_t halfPeriodTime; //FIXME Temporary for setting a static period time
  */
 void inputInterpreterInit() {
 	initImageHandler();
+	InitI2C1();
 	lastUpdate = time(0);
 	lastHalfPeriodTime = time(0);
 	timeSinceTurn = time(0);
@@ -42,6 +43,10 @@ void inputInterpreterInit() {
  */
 
 void updatePosition() {
+	SysCtlDelay(200);
+	accelDrawer(getAccel());
+	return;
+
 	updateFakePosition();	//FIXME Temporary for setting a static period time
 	return;					//FIXME Temporary for setting a static period time
 	// Fetch acceleration
@@ -76,10 +81,8 @@ void updatePosition() {
  * This function reads a accelerometer value and returns it as a float value.
  */
 
-uint8_t getAccel() {
-	//TODO Implement
-	//return I2CReceive(slaveAddress, reg);
-	return 0;
+int getAccel() {
+	return (int)I2CReceive(24, 0x28);
 }
 
 void updateFakePosition() {
