@@ -91,6 +91,6 @@ void updateFakePosition() {
 			dir = 1-dir;
 			pos = 0;
 		}
-		SysCtlDelay( (SysCtlClockGet()/(3*1000))*10 ); //Delays 10 ms.
+		SysCtlDelay(200);
 	}
 }
