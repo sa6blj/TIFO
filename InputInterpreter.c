@@ -7,11 +7,13 @@
 
 #include <time.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include "driverlib/sysctl.h"
 #include "I2Ccommunication.h"
 #include "InputInterpreter.h"
 #include "ImageHandler.h"
 
-static int getAccel();
+static int getXAccel();
 
 static time_t lastUpdate;
 static time_t lastHalfPeriodTime;
@@ -35,6 +37,9 @@ void inputInterpreterInit() {
 	halfPeriodTime = 20; //FIXME Temporary for setting a static period time
 	dir = 1;
 	speed = 0;
+
+    //Starts the accelerometer and enables X-Axis.
+    //I2CSend(0x18, 0x20, 0x21);
 }
 
 /*
@@ -43,14 +48,14 @@ void inputInterpreterInit() {
  */
 
 void updatePosition() {
-	SysCtlDelay(200);
-	accelDrawer(getAccel());
+	/*SysCtlDelay(2000);
+	accelDrawer(getXAccel());
 	return;
-
+*/
 	updateFakePosition();	//FIXME Temporary for setting a static period time
 	return;					//FIXME Temporary for setting a static period time
 	// Fetch acceleration
-	float accel = getAccel();
+	float accel = getXAccel();
 
 	// Calculate time since updatePosition was last run
 	time_t timeDiff = time(0) - lastUpdate;
@@ -81,8 +86,21 @@ void updatePosition() {
  * This function reads a accelerometer value and returns it as a float value.
  */
 
-int getAccel() {
-	return (int)I2CReceive(24, 0x28);
+int getXAccel() {
+	int data = 0;
+	int i=0;
+	for (i=0; i<=0x7f; i++) {
+		SysCtlDelay(200);
+		data = I2CReceive(i, 0x0f);
+		if (data != 0) {
+			return data;
+		}
+	}
+	return I2CReceive(0x19, 0x0f);
+	uint32_t accelH, accelL;
+	accelL = I2CReceive(0x18, 0x28);
+	accelH = I2CReceive(0x18, 0x29);
+	return (int)((accelH << 8) | accelL);
 }
 
 void updateFakePosition() {

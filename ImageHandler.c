@@ -61,5 +61,5 @@ void accelDrawer(int val) {
 			pixels |= 0x80;
 		}
 	}
-	updateOutputs(pixels);
+	updateOutputs(val);
 }

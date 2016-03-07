@@ -49,8 +49,44 @@ void InitI2C1(void)
     HWREG(I2C1_BASE + I2C_O_FIFOCTL) = 80008000;
 }
 
+//sends an I2C command to the specified slave
+void I2CSend(uint16_t device_address, uint16_t device_register, uint8_t device_data)
+{
+	int err = 0;
+	//specify that we want to communicate to device address with an intended write to bus
+	I2CMasterSlaveAddrSet(I2C1_BASE, device_address, false);
 
+	err = I2CMasterErr(I2C1_BASE);
+	if (err != 0) {
+		while(1){}
+	}
 
+	//register to be read
+	I2CMasterDataPut(I2C1_BASE, device_data);
+
+	err = I2CMasterErr(I2C1_BASE);
+	if (err != 0) {
+		while(1){}
+	}
+
+	//send control byte and register address byte to slave device
+	I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_SINGLE_SEND);
+
+	err = I2CMasterErr(I2C1_BASE);
+	if (err != 0) {
+		while(1){}
+	}
+
+	//wait for MCU to finish transaction
+	while(I2CMasterBusBusy(I2C1_BASE));
+
+	err = I2CMasterErr(I2C1_BASE);
+	if (err != 0) {
+		while(1){}
+	}
+}
+
+/*
 //sends an I2C command to the specified slave
 void I2CSend(uint8_t slave_addr, uint8_t num_of_args)
 {
@@ -117,24 +153,35 @@ void I2CSend(uint8_t slave_addr, uint8_t num_of_args)
         va_end(vargs);
     }
 }
-
+*/
 
 
 //read specified register on slave device
 uint32_t I2CReceive(uint32_t slave_addr, uint8_t reg)
 {
+	int err = 0;
     //specify that we are writing (a register address) to the
     //slave device
     I2CMasterSlaveAddrSet(I2C1_BASE, slave_addr, false);
+
+    err = I2CMasterErr(I2C1_BASE);
+	if (err != 0) {
+		while(1){}
+	}
 
     //specify register to be read
     I2CMasterDataPut(I2C1_BASE, reg);
 
     //send control byte and register address byte to slave device
-    I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_BURST_SEND_START);
+    I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_SINGLE_SEND);
+
+    err = I2CMasterErr(I2C1_BASE);
+	if (err != 0) {
+		while(1){}
+	}
 
     //wait for MCU to finish transaction
-    while(I2CMasterBusy(I2C1_BASE));
+    while(I2CMasterBusBusy(I2C1_BASE));
 
     //specify that we are going to read from slave device
     I2CMasterSlaveAddrSet(I2C1_BASE, slave_addr, true);
@@ -143,8 +190,13 @@ uint32_t I2CReceive(uint32_t slave_addr, uint8_t reg)
     //specified
     I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
 
+    err = I2CMasterErr(I2C1_BASE);
+	if (err != 0) {
+		while(1){}
+	}
+
     //wait for MCU to finish transaction
-    while(I2CMasterBusy(I2C1_BASE));
+    while(I2CMasterBusBusy(I2C1_BASE));
 
     //return data pulled from the specified register
     return I2CMasterDataGet(I2C1_BASE);
