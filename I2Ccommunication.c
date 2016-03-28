@@ -22,22 +22,21 @@
 //Slightly modified version of TI's example code
 void InitI2C1(void)
 {
-    //enable I2C module 1
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C1);
-
-    //reset module
-    SysCtlPeripheralReset(SYSCTL_PERIPH_I2C1);
-
     //enable GPIO peripheral that contains I2C 0
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
-    // Configure the pin muxing for I2C0 functions on port B2 and B3.
+    // Configure the pin muxing for I2C0 functions on port A6 and A7.
     GPIOPinConfigure(GPIO_PA6_I2C1SCL);
     GPIOPinConfigure(GPIO_PA7_I2C1SDA);
 
     // Select the I2C function for these pins.
     GPIOPinTypeI2CSCL(GPIO_PORTA_BASE, GPIO_PIN_6);
     GPIOPinTypeI2C(GPIO_PORTA_BASE, GPIO_PIN_7);
+
+    //enable I2C module 1
+    SysCtlPeripheralDisable(SYSCTL_PERIPH_I2C1);
+    SysCtlPeripheralReset(SYSCTL_PERIPH_I2C1);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C1);
 
     // Enable and initialize the I2C0 master module.  Use the system clock for
     // the I2C0 module.  The last parameter sets the I2C data transfer rate.
@@ -57,33 +56,41 @@ void I2CSend(uint16_t device_address, uint16_t device_register, uint8_t device_d
 	I2CMasterSlaveAddrSet(I2C1_BASE, device_address, false);
 
 	err = I2CMasterErr(I2C1_BASE);
-	if (err != 0) {
-		while(1){}
-	}
+	while(err != 0){}
 
 	//register to be read
-	I2CMasterDataPut(I2C1_BASE, device_data);
+	I2CMasterDataPut(I2C1_BASE, device_register);
 
 	err = I2CMasterErr(I2C1_BASE);
-	if (err != 0) {
-		while(1){}
-	}
+	while(err != 0){}
+	int data = I2CMasterDataGet(I2C1_BASE);
 
 	//send control byte and register address byte to slave device
-	I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_SINGLE_SEND);
+	I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_BURST_SEND_START);
 
+	//wait for MCU to finish transaction
+	while(I2CMasterBusBusy(I2C1_BASE));
 	err = I2CMasterErr(I2C1_BASE);
-	if (err != 0) {
-		while(1){}
-	}
+	while(err != 0){}
+
+	// Data to be sent
+	I2CMasterDataPut(I2C1_BASE, device_data);
+
+	I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_BURST_SEND_CONT);
 
 	//wait for MCU to finish transaction
 	while(I2CMasterBusBusy(I2C1_BASE));
 
 	err = I2CMasterErr(I2C1_BASE);
-	if (err != 0) {
-		while(1){}
-	}
+	while(err != 0){}
+
+	I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_BURST_SEND_FINISH);
+
+	//wait for MCU to finish transaction
+	while(I2CMasterBusBusy(I2C1_BASE));
+
+	err = I2CMasterErr(I2C1_BASE);
+	while(err != 0){}
 }
 
 /*
@@ -165,24 +172,24 @@ uint32_t I2CReceive(uint32_t slave_addr, uint8_t reg)
     I2CMasterSlaveAddrSet(I2C1_BASE, slave_addr, false);
 
     err = I2CMasterErr(I2C1_BASE);
-	if (err != 0) {
-		while(1){}
-	}
+    while(err != 0){}
 
     //specify register to be read
     I2CMasterDataPut(I2C1_BASE, reg);
 
+    err = I2CMasterErr(I2C1_BASE);
+    while(err != 0){}
+
     //send control byte and register address byte to slave device
-    I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_SINGLE_SEND);
+    I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_BURST_SEND_START);
 
     err = I2CMasterErr(I2C1_BASE);
-	if (err != 0) {
-		while(1){}
-	}
+    while(err != 0){}
 
     //wait for MCU to finish transaction
     while(I2CMasterBusBusy(I2C1_BASE));
-
+	err = I2CMasterErr(I2C1_BASE);
+	while(err != 0){}
     //specify that we are going to read from slave device
     I2CMasterSlaveAddrSet(I2C1_BASE, slave_addr, true);
 
@@ -191,13 +198,12 @@ uint32_t I2CReceive(uint32_t slave_addr, uint8_t reg)
     I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
 
     err = I2CMasterErr(I2C1_BASE);
-	if (err != 0) {
-		while(1){}
-	}
+    while(err != 0){}
 
     //wait for MCU to finish transaction
     while(I2CMasterBusBusy(I2C1_BASE));
-
+	err = I2CMasterErr(I2C1_BASE);
+	while(err != 0){}
     //return data pulled from the specified register
     return I2CMasterDataGet(I2C1_BASE);
 }

@@ -4,7 +4,6 @@
  * to represent this column.
  */
  
-#include "OutputInterpreter.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -16,6 +15,8 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
+#include "OutputInterpreter.h"
+#include "LEDSSICommunication.h"
 
 /* These pins are part of Port A */
 #define led10 GPIO_PIN_2
@@ -47,6 +48,8 @@
 
 // Init port for read and write
 void initOutputs(void){
+	//void InitSSI();
+
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
@@ -58,6 +61,7 @@ void initOutputs(void){
 	while(!(SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOD)));
 	HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY;
 	HWREG(GPIO_PORTD_BASE+GPIO_O_CR) |= GPIO_PIN_7;
+	HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = 0;
 
 	// Init Port A and B as outputs
 	GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5);
@@ -69,29 +73,7 @@ void initOutputs(void){
 }
 
 void updateOutputs(unsigned int col) {
-	/*
-	 * Usage of GPIOPinWrite:
-	 *
-	 * GPIOPinWrite([Base address to chosen port], ([List of pins to write to]), [Value to print]);
-	 */
-	/*
-	GPIOPinWrite(GPIO_PORTF_BASE,(led0), led0 & (col<<4));							//F
-	GPIOPinWrite(GPIO_PORTD_BASE,(led1), led1 & (col<<6));					//D
-	GPIOPinWrite(GPIO_PORTD_BASE,(led2), led2 & (col<<4));					//D
-	GPIOPinWrite(GPIO_PORTC_BASE,(led3), led3 & (col<<4));				//C
-	GPIOPinWrite(GPIO_PORTC_BASE,(led4), led4 & (col<<2));				//C
-	GPIOPinWrite(GPIO_PORTC_BASE,(led5), led5 & col);					//C
-	GPIOPinWrite(GPIO_PORTC_BASE,(led6), led6 & (col>>2));				//C
-	GPIOPinWrite(GPIO_PORTB_BASE,(led7), led7 & (col>>4));			//B
-	GPIOPinWrite(GPIO_PORTF_BASE,(led8), led8 & (col>>5));							//F
-	GPIOPinWrite(GPIO_PORTF_BASE,(led9), led9 & (col>>7));							//F
-	GPIOPinWrite(GPIO_PORTA_BASE,(led10), led10 & (col>>8));	//A
-	GPIOPinWrite(GPIO_PORTA_BASE,(led11), led11 & (col>>8));	//A
-	GPIOPinWrite(GPIO_PORTA_BASE,(led12), led12 & (col>>8));	//A
-	GPIOPinWrite(GPIO_PORTE_BASE,(led13), led13 & (col>>13));					//E
-	GPIOPinWrite(GPIO_PORTB_BASE,(led14), led14 & (col>>12));		//B
-	GPIOPinWrite(GPIO_PORTA_BASE,(led15), led15 & (col>>10));	//A
-	*/
+	//void onOffUpdate(col);
 
 	int aInt = 0, bInt = 0, cInt = 0, dInt = 0, eInt = 0, fInt = 0;
 
