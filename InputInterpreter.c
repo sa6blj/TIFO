@@ -161,20 +161,22 @@ void onButtonDown() {
     if (GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_PIN_0) {
         // PF0 was interrupt cause
     	buttonLongPress = time(0);
-    	running = true;
         GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);  // Clear interrupt flag
         GPIOIntRegister(GPIO_PORTF_BASE, onButtonUp);   // Next interrupt will be button up
         GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_RISING_EDGE);
-    	nextImage();
     }
 }
 
 void onButtonUp() {
     if (GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_PIN_0) {
         // PF0 was interrupt cause
-    	if (time(0) - buttonLongPress > 1000) {
+    	if (time(0) - buttonLongPress > 1) { // If held for longer than a second it turns of the LEDs
     		updateImage(0);
     		running = false;
+    	} else if (!running) {
+    		running = true;
+    	} else {
+    		nextImage();
     	}
 		GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);  // Clear interrupt flag
 		GPIOIntRegister(GPIO_PORTF_BASE, onButtonDown); // Next interrupt will be button down
