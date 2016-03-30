@@ -18,9 +18,9 @@
 #include "driverlib/pin_map.h"
 #include "LEDSSICommunication.h"
 
-#define MODE GPIO_PIN_3
-#define XLAT GPIO_PIN_4
-#define BLANK GPIO_PIN_3
+#define MODE GPIO_PIN_2
+#define XLAT GPIO_PIN_3
+#define BLANK GPIO_PIN_7
 #define HIGH 0xff
 #define LOW 0
 
@@ -29,8 +29,8 @@ void InitSSI() {
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
 
-	GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_3 | GPIO_PIN_4); // MODE and XLAT
-	GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3); // BLANK
+	GPIOPinTypeGPIOOutput(GPIO_PORTB_BASE, GPIO_PIN_2 | GPIO_PIN_3); // MODE and XLAT
+	GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_7); // BLANK
 	GPIOPinConfigure(GPIO_PB4_SSI2CLK);
 	GPIOPinConfigure(GPIO_PB6_SSI2RX);
 	GPIOPinConfigure(GPIO_PB7_SSI2TX);

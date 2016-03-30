@@ -28,7 +28,9 @@ static time_t lastHalfPeriodTime;
 static time_t timeSinceTurn;
 static int dir;
 static float speed;
+static int running;
 
+static time_t buttonLongPress;
 static time_t lastTurnTime; //FIXME Temporary for setting a static period time
 static time_t halfPeriodTime; //FIXME Temporary for setting a static period time
 
@@ -38,7 +40,7 @@ static time_t halfPeriodTime; //FIXME Temporary for setting a static period time
 void inputInterpreterInit() {
 	initImageHandler();
 	InitI2C1();
-	//initButton();
+	initButton();
 	lastUpdate = time(0);
 	lastHalfPeriodTime = time(0);
 	timeSinceTurn = time(0);
@@ -55,6 +57,7 @@ void inputInterpreterInit() {
     int read1 = I2CReceive(0x18, 0x0F);
     read2 = I2CReceive(0x18, 0x20);
     */
+	running = true;
 }
 
 /*
@@ -135,15 +138,15 @@ void initButton() {
 	//Interrupt setup
 	GPIOIntDisable(GPIO_PORTF_BASE, GPIO_PIN_0);    //Disable interrupts
 	GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);      //Clear interrupts
-	SysCtlDelay(30);
 	GPIOIntRegister(GPIO_PORTF_BASE, onButtonDown); //Set handler
-	GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_4,	GPIO_FALLING_EDGE);//Send interrupt when pressed down
-	GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_4);     //Enable interrupts
+	GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0,	GPIO_FALLING_EDGE);//Send interrupt when pressed down
+	GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_0);     //Enable interrupts
 }
 
 void updateFakePosition() {
 	float pos = 0;
 	while(1) {
+		while(!running);
 		updateImage( dir ? pos : (1-pos) );
 		pos += 0.001;
 		if (pos > 1) {
@@ -157,6 +160,8 @@ void updateFakePosition() {
 void onButtonDown() {
     if (GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_PIN_0) {
         // PF0 was interrupt cause
+    	buttonLongPress = time(0);
+    	running = true;
         GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);  // Clear interrupt flag
         GPIOIntRegister(GPIO_PORTF_BASE, onButtonUp);   // Next interrupt will be button up
         GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_RISING_EDGE);
@@ -167,8 +172,12 @@ void onButtonDown() {
 void onButtonUp() {
     if (GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_PIN_0) {
         // PF0 was interrupt cause
-        GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);  // Clear interrupt flag
-        GPIOIntRegister(GPIO_PORTF_BASE, onButtonDown); // Next interrupt will be button down
-        GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_FALLING_EDGE);
+    	if (time(0) - buttonLongPress > 1000) {
+    		updateImage(0);
+    		running = false;
+    	}
+		GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);  // Clear interrupt flag
+		GPIOIntRegister(GPIO_PORTF_BASE, onButtonDown); // Next interrupt will be button down
+		GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_FALLING_EDGE);
     }
 }
