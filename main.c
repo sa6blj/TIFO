@@ -22,6 +22,7 @@ char text[32] = {0x00, 0x80, 0x80, 0xff, 0x80, 0x80, 0x00, 		   //T
 //CONTROLLER
 //freuency
 int main(void) {
+	//SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN); //TODO This is probably very important
 	inputInterpreterInit();
 	while (1){
 		updatePosition();

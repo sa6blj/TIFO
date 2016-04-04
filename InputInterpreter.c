@@ -20,15 +20,15 @@
 
 static int getXAccel();
 static void initButton();
-static void onButtonDown();
-static void onButtonUp();
+static void bitSwitchUpdate();
+static int readBitSwitch();
 
 static time_t lastUpdate;
 static time_t lastHalfPeriodTime;
 static time_t timeSinceTurn;
 static int dir;
 static float speed;
-static int running;
+static volatile int running;
 
 static time_t buttonLongPress;
 static time_t lastTurnTime; //FIXME Temporary for setting a static period time
@@ -39,8 +39,8 @@ static time_t halfPeriodTime; //FIXME Temporary for setting a static period time
  */
 void inputInterpreterInit() {
 	initImageHandler();
-	InitI2C1();
-	initButton();
+	InitI2C3();
+	//initButton();
 	lastUpdate = time(0);
 	lastHalfPeriodTime = time(0);
 	timeSinceTurn = time(0);
@@ -50,6 +50,12 @@ void inputInterpreterInit() {
 	speed = 0;
 
 	/*
+	I2CSend(0x68, 0x6B, 0x80);
+	I2CSend(0x68, 0x6B, 0x29);
+	uint8_t whoami[1];
+	I2CReceive(0x68, 0x6B, 1, whoami);
+	accelDrawer(whoami[0]);
+
     //Restarts the accelerometer and enables X-Axis.
     I2CSend(0x18, 0x20, 0x07);
     int read2 = I2CReceive(0x18, 0x20);
@@ -66,11 +72,13 @@ void inputInterpreterInit() {
  */
 
 void updatePosition() {
+
 	/*
 	SysCtlDelay(2000);
 	accelDrawer(getXAccel());
 	return;
 	*/
+
 	updateFakePosition();	//FIXME Temporary for setting a static period time
 	return;					//FIXME Temporary for setting a static period time
 	// Fetch acceleration
@@ -115,32 +123,64 @@ int getXAccel() {
 			return data;
 		}
 	}*/
-	return I2CReceive(0x18, 0x0f);
+	//return I2CReceive(0x18, 0x0f);
 	uint32_t accelH, accelL;
-	accelL = I2CReceive(0x18, 0x28);
-	accelH = I2CReceive(0x18, 0x29);
+	accelL = I2CReceiveByte(0x68, 0x3b);
+	accelH = I2CReceiveByte(0x68, 0x3c);
 	return (int)((accelH << 8) | accelL);
 }
 
 void initButton() {
-	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+	/*
+	 * 1 - B5
+	 * 2 - D7
+	 * 3 - D1
+	 * 4 - D0
+	 * 5 - E4
+	 */
 
-	//Unlocks F0 (SW2 button) which is locked for specific NMI functionality
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
+
+	//Unlocks D7 (SW2 button) which is locked for specific NMI functionality
 	while(!(SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF)));
-	HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY;
-	HWREG(GPIO_PORTF_BASE+GPIO_O_CR) |= GPIO_PIN_0;
-	HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = 0;
+	HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY;
+	HWREG(GPIO_PORTD_BASE+GPIO_O_CR) |= GPIO_PIN_7;
+	HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = 0;
 
-	//Sets F0 as an input with a weak pullup resistor
-	GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_0);
-	GPIOPadConfigSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+	//Set all pins as inputs with a weak pullup resistors
+	GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_PIN_5);
+	GPIOPadConfigSet(GPIO_PORTB_BASE, GPIO_PIN_5, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+	GPIOPinTypeGPIOInput(GPIO_PORTD_BASE, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_7));
+	GPIOPadConfigSet(GPIO_PORTD_BASE, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_7), GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+	GPIOPinTypeGPIOInput(GPIO_PORTE_BASE, GPIO_PIN_4);
+	GPIOPadConfigSet(GPIO_PORTE_BASE, GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
-	//Interrupt setup
-	GPIOIntDisable(GPIO_PORTF_BASE, GPIO_PIN_0);    //Disable interrupts
-	GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);      //Clear interrupts
-	GPIOIntRegister(GPIO_PORTF_BASE, onButtonDown); //Set handler
-	GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0,	GPIO_FALLING_EDGE);//Send interrupt when pressed down
-	GPIOIntEnable(GPIO_PORTF_BASE, GPIO_PIN_0);     //Enable interrupts
+    //Disable interrupts
+	GPIOIntDisable(GPIO_PORTB_BASE, GPIO_PIN_5);
+	GPIOIntDisable(GPIO_PORTD_BASE, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_7));
+	GPIOIntDisable(GPIO_PORTE_BASE, GPIO_PIN_4);
+
+	//Clear interrupts
+	GPIOIntClear(GPIO_PORTB_BASE, GPIO_PIN_5);
+	GPIOIntClear(GPIO_PORTD_BASE, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_7));
+	GPIOIntClear(GPIO_PORTE_BASE, GPIO_PIN_4);
+
+	//Set interrupt handler
+	GPIOIntRegister(GPIO_PORTB_BASE, bitSwitchUpdate);
+	GPIOIntRegister(GPIO_PORTD_BASE, bitSwitchUpdate);
+	GPIOIntRegister(GPIO_PORTE_BASE, bitSwitchUpdate);
+
+	//Set the interrupt to trigger on any input change
+	GPIOIntTypeSet(GPIO_PORTB_BASE, GPIO_PIN_5,	GPIO_BOTH_EDGES);
+	GPIOIntTypeSet(GPIO_PORTD_BASE, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_7),	GPIO_BOTH_EDGES);
+	GPIOIntTypeSet(GPIO_PORTE_BASE, GPIO_PIN_4,	GPIO_BOTH_EDGES);
+
+	//Enable interrupts
+	GPIOIntEnable(GPIO_PORTB_BASE, GPIO_PIN_5);
+	GPIOIntEnable(GPIO_PORTD_BASE, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_7));
+	GPIOIntEnable(GPIO_PORTE_BASE, GPIO_PIN_4);
 }
 
 void updateFakePosition() {
@@ -157,12 +197,23 @@ void updateFakePosition() {
 	}
 }
 
+void bitSwitchUpdate() {
+	GPIOIntClear(GPIO_PORTB_BASE, GPIO_PIN_5);
+	GPIOIntClear(GPIO_PORTD_BASE, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_7));
+	GPIOIntClear(GPIO_PORTE_BASE, GPIO_PIN_4);
+	int apa = 4;
+}
+
+int readBitSwitch() {
+
+}
+
 void onButtonDown() {
     if (GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_PIN_0) {
         // PF0 was interrupt cause
     	buttonLongPress = time(0);
         GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);  // Clear interrupt flag
-        GPIOIntRegister(GPIO_PORTF_BASE, onButtonUp);   // Next interrupt will be button up
+        //GPIOIntRegister(GPIO_PORTF_BASE, onButtonUp);   // Next interrupt will be button up
         GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_RISING_EDGE);
     }
 }

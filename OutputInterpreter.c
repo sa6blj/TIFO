@@ -48,7 +48,9 @@
 
 // Init port for read and write
 void initOutputs(void){
-	//void InitSSI();
+	InitSSI();
+
+	return;
 
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
@@ -73,7 +75,9 @@ void initOutputs(void){
 }
 
 void updateOutputs(unsigned int col) {
-	//void onOffUpdate(col);
+	onOffUpdate(col);
+
+	return;
 
 	int aInt = 0, bInt = 0, cInt = 0, dInt = 0, eInt = 0, fInt = 0;
 
