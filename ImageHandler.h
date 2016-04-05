@@ -14,7 +14,7 @@ void initImageHandler(void);
 /*
  * (Debug method) Draws the current acceleration affected by the stick.
  */
-void accelDrawer(int val);
+void accelDrawer(int16_t val);
 
 /*
  * Goes to the next image predefined image.

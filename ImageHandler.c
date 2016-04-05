@@ -3,6 +3,7 @@
  * diods should light up given the current position.
  */
 
+#include <stdint.h>
 #include "ImageHandler.h"
 #include "OutputInterpreter.h"
 
@@ -89,20 +90,20 @@ void updateImage(float pos) {
 	}
 }
 
-void accelDrawer(int val) {
-	int nbrOfLights = (((float)val)/32768)*8;
+void accelDrawer(int16_t val) {
+	int nbrOfLights = (((float)val)/32767)*16;
 	int pixels = 0;
 	int i = (nbrOfLights<0 ? -nbrOfLights : nbrOfLights);
-	for(i=0; i>0;i--) {
+	for(; i>0;i--) {
 		if (nbrOfLights<0) {
 			pixels <<= 1;
-			pixels |= 0x100;
+			pixels |= 0x10000;
 		} else {
 			pixels >>= 1;
-			pixels |= 0x80;
+			pixels |= 0x8000;
 		}
 	}
-	updateOutputs(val);
+	updateOutputs(pixels);
 }
 
 void updateImgChoice() {

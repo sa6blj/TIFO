@@ -25,7 +25,7 @@
 #define LOW 0
 
 void InitSSI() {
-	// Enable SSI module 2
+	// Enable SSI module 1
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI1);
 
 	// Enable GPIO peripheral that contains SSI 1

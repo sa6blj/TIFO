@@ -19,7 +19,7 @@
 
 
 //initialize I2C module 3 D0&D1
-void InitI2C3(void)
+void initI2C3(void)
 {
     //enable GPIO peripheral that contains I2C 3
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
@@ -41,7 +41,7 @@ void InitI2C3(void)
     // the I2C3 module.  The last parameter sets the I2C data transfer rate.
     // If false the data rate is set to 100kbps and if true the data rate will
     // be set to 400kbps.
-    I2CMasterInitExpClk(I2C3_BASE, SysCtlClockGet(), false);
+    I2CMasterInitExpClk(I2C3_BASE, SysCtlClockGet(), true);
 
     //clear I2C FIFOs
     HWREG(I2C3_BASE + I2C_O_FIFOCTL) = 80008000;
@@ -55,8 +55,6 @@ void I2CSend(uint16_t device_address, uint16_t device_register, uint8_t device_d
 
 	//register to be read
 	I2CMasterDataPut(I2C3_BASE, device_register);
-
-	int data = I2CMasterDataGet(I2C3_BASE);
 
 	//send control byte and register address byte to slave device
 	I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_BURST_SEND_START);
@@ -147,7 +145,7 @@ void I2CSend(uint8_t slave_addr, uint8_t num_of_args)
 }
 */
 
-int I2CReceive(uint32_t slave_addr, uint8_t start_reg, uint32_t nbrBytes, uint8_t* result) {
+int I2CReceive(uint32_t slave_addr, uint8_t start_reg, uint32_t nbrBytes, uint8_t* resultArray) {
 	if (nbrBytes < 1) {
 		return -1;
 	}
@@ -168,18 +166,29 @@ int I2CReceive(uint32_t slave_addr, uint8_t start_reg, uint32_t nbrBytes, uint8_
 	//specify that we are going to read from slave device
 	I2CMasterSlaveAddrSet(I2C3_BASE, slave_addr, true);
 
-	int i = 0;
-	for (; i<nbrBytes; i++) {
-		if (nbrBytes-i == 1) {
-			I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
-		} else {
-			I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
-		}
+	if (nbrBytes == 1) {
+		I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
 
 		//wait for MCU to finish transaction
 		while(I2CMasterBusy(I2C3_BASE));
 
-		result[i] = I2CMasterDataGet(I2C3_BASE);
+		resultArray[0] = I2CMasterDataGet(I2C3_BASE);
+	} else {
+		I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_BURST_RECEIVE_START);
+		while(I2CMasterBusy(I2C3_BASE));
+		resultArray[0] = I2CMasterDataGet(I2C3_BASE);
+
+		int i = 1;
+		for (; i < (nbrBytes-1); i++) {
+			I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+
+			while(I2CMasterBusy(I2C3_BASE));
+			resultArray[i] = I2CMasterDataGet(I2C3_BASE);
+		}
+		I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+
+		while(I2CMasterBusy(I2C3_BASE));
+		resultArray[i] = I2CMasterDataGet(I2C3_BASE);
 	}
 
 	//wait for MCU to finish transaction
@@ -191,48 +200,13 @@ int I2CReceive(uint32_t slave_addr, uint8_t start_reg, uint32_t nbrBytes, uint8_
 //read specified register on slave device
 uint8_t I2CReceiveByte(uint32_t slave_addr, uint8_t reg)
 {
-	int err = 0;
-    //specify that we are writing (a register address) to the
-    //slave device
-    I2CMasterSlaveAddrSet(I2C3_BASE, slave_addr, false);
-
-    err = I2CMasterErr(I2C3_BASE);
-    while(err != 0){}
-
-    //specify register to be read
-    I2CMasterDataPut(I2C3_BASE, reg);
-
-    err = I2CMasterErr(I2C3_BASE);
-    while(err != 0){}
-
-    //send control byte and register address byte to slave device
-    I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_BURST_SEND_START);
-
-    err = I2CMasterErr(I2C3_BASE);
-    while(err != 0){}
-
-    //wait for MCU to finish transaction
-    while(I2CMasterBusy(I2C3_BASE));
-	err = I2CMasterErr(I2C3_BASE);
-	while(err != 0){}
-    //specify that we are going to read from slave device
-    I2CMasterSlaveAddrSet(I2C3_BASE, slave_addr, true);
-
-    //send control byte and read from the register we
-    //specified
-    I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_SINGLE_RECEIVE);
-
-    err = I2CMasterErr(I2C3_BASE);
-    while(err != 0){}
-
-    //wait for MCU to finish transaction
-    while(I2CMasterBusBusy(I2C3_BASE));
-	err = I2CMasterErr(I2C3_BASE);
-	while(err != 0){}
-    //return data pulled from the specified register
-    return I2CMasterDataGet(I2C3_BASE);
+	uint8_t data[0];
+	I2CReceive(slave_addr, reg, 1, data);
+	return data[0];
 }
 
 uint16_t I2CReceiveShort(uint32_t slave_addr, uint8_t start_reg) {
-
+	uint8_t data[2];
+	I2CReceive(slave_addr, start_reg, 2, data);
+	return (uint16_t)((data[0] << 8) | data[1]);
 }
