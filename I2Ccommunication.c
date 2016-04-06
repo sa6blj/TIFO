@@ -65,11 +65,6 @@ void I2CSend(uint16_t device_address, uint16_t device_register, uint8_t device_d
 	// Data to be sent
 	I2CMasterDataPut(I2C3_BASE, device_data);
 
-	I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_BURST_SEND_CONT);
-
-	//wait for MCU to finish transaction
-	while(I2CMasterBusy(I2C3_BASE));
-
 	I2CMasterControl(I2C3_BASE, I2C_MASTER_CMD_BURST_SEND_FINISH);
 
 	//wait for MCU to finish transaction

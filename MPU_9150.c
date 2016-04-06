@@ -33,7 +33,7 @@
 void initAccelerometer() {
 	I2CSend(BASE_ADDRESS, PWR_MGMT_1, 0x80);	//Reset the unit
 	SysCtlDelay(200000);
-	I2CSend(BASE_ADDRESS, PWR_MGMT_1, 0x09);	//Disable thermometer and gyro as clock source
+	I2CSend(BASE_ADDRESS, PWR_MGMT_1, 0x09);	//Disable thermometer and use the gyro as clock source
 	SysCtlDelay(200000);
 }
 
