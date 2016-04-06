@@ -25,6 +25,7 @@ static void bitSwitchUpdate();
 static unsigned int readBitSwitch();
 
 static clock_t lastUpdate;
+static clock_t currTime;
 //static clock_t lastHalfPeriodTime;
 //static clock_t timeSinceTurn;
 static int dir;
@@ -77,26 +78,27 @@ void inputInterpreterInit() {
 void updatePosition() {
 
 
-	//SysCtlDelay(2000);
-	//accelDrawer(getXAccel());
+	SysCtlDelay(2000);
+	//accelDrawer(getZGyro());
 	//return;
 
 
 	//updateFakePosition();	//FIXME Temporary for setting a static period time
 	//return;					//FIXME Temporary for setting a static period time
 	// Fetch acceleration
-	accel = getXAccel();
-	speed = getYAccel();
+	//accel = getXAccel();
+	speed = getZGyro();
 
 	// Calculate time since updatePosition was last run
-	clock_t timeDiff = clock() - lastUpdate;
-
+	currTime = clock();
+	int timeDiff = (currTime - lastUpdate)/CLOCKS_PER_SEC;
+	lastUpdate = clock();
 	// Update movement since last Update
-	position = position + speed / timeDiff;
+	position = position + speed * timeDiff;
 
 	// If direction has changed, update direction
-	if (((accel > 0) != (dir > 0)) && speed > lastSpeed) {
-		if (accel > 0){
+	if ((speed > 0) != (dir > 0)){
+		if (speed > 0){
 			dir = 1;
 		}
 		else {
@@ -106,7 +108,7 @@ void updatePosition() {
 	}
 
 	// Send this position to updateImage function
-	updateImage( dir ? imageWidth/position : (1-imageWidth/position) );
+	updateImage( dir ? position/imageWidth : (1-position/imageWidth) );
 }
 
 void initButton() {
