@@ -15,5 +15,6 @@ int getZAccel(void);
 int getXGyro(void);
 int getYGyro(void);
 int getZGyro(void);
+void setAccelConfig(uint8_t data);
 
 #endif /* MPU_9150_H_ */
