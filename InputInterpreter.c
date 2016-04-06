@@ -15,6 +15,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
+#include "driverlib/systick.h"
 #include "I2Ccommunication.h"
 #include "InputInterpreter.h"
 #include "ImageHandler.h"
@@ -29,12 +30,12 @@ static clock_t currTime;
 //static clock_t lastHalfPeriodTime;
 //static clock_t timeSinceTurn;
 static int dir;
-static float speed;
+static int16_t speed;
 static float lastSpeed;
 static float accel;
-static int position;
+static float position;
 static volatile int running;
-static int imageWidth;
+static float imageWidth;
 
 static clock_t buttonLongPress;
 static clock_t lastTurnTime; //FIXME Temporary for setting a static period time
@@ -57,7 +58,7 @@ void inputInterpreterInit() {
 	halfPeriodTime = 20; //FIXME Temporary for setting a static period time
 	dir = 1;
 	speed = 0;
-	imageWidth = 100000;
+	imageWidth = 1000;
 
 	/*
     //Restarts the accelerometer and enables X-Axis.
@@ -90,25 +91,25 @@ void updatePosition() {
 	speed = getZGyro();
 
 	// Calculate time since updatePosition was last run
-	currTime = clock();
-	int timeDiff = (currTime - lastUpdate)/CLOCKS_PER_SEC;
-	lastUpdate = clock();
+
+	//int timeDiff = 100;
+
 	// Update movement since last Update
-	position = position + speed * timeDiff;
+	position = position + speed;
 
 	// If direction has changed, update direction
-	if ((speed > 0) != (dir > 0)){
-		if (speed > 0){
-			dir = 1;
-		}
-		else {
-			dir = 0;
-		}
+	if ((speed > 0) && (dir == 0)){
+		dir = 1;
 		position = 0;
+	} else if ((speed < 0) && (dir == 1)){
+		dir = 0;
+	}
+	if (position > imageWidth){
+		imageWidth = position*1.2;
 	}
 
 	// Send this position to updateImage function
-	updateImage( dir ? position/imageWidth : (1-position/imageWidth) );
+	updateImage(position/imageWidth);
 }
 
 void initButton() {

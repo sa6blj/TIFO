@@ -11,7 +11,7 @@
 
 static void updateImgChoice();
 
-static int currImg = 3;
+static int currImg = 1;
 static int lastIndex = 0;
 
 #define NUM_IMAGES 7
