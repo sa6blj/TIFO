@@ -31,7 +31,6 @@
 #define PWR_MGMT_2 0x6c
 
 void initAccelerometer() {
-	I2CReceiveShort(BASE_ADDRESS, PWR_MGMT_1);
 	I2CSend(BASE_ADDRESS, PWR_MGMT_1, 0x80);	//Reset the unit
 	SysCtlDelay(200000);
 	I2CSend(BASE_ADDRESS, PWR_MGMT_1, 0x09);	//Disable thermometer and use the gyro as clock source
