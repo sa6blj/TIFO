@@ -24,16 +24,20 @@ static void initButton();
 static void bitSwitchUpdate();
 static unsigned int readBitSwitch();
 
-static time_t lastUpdate;
-static time_t lastHalfPeriodTime;
-static time_t timeSinceTurn;
+static clock_t lastUpdate;
+//static clock_t lastHalfPeriodTime;
+//static clock_t timeSinceTurn;
 static int dir;
 static float speed;
+static float lastSpeed;
+static float accel;
+static int position;
 static volatile int running;
+static int imageWidth;
 
-static time_t buttonLongPress;
-static time_t lastTurnTime; //FIXME Temporary for setting a static period time
-static time_t halfPeriodTime; //FIXME Temporary for setting a static period time
+static clock_t buttonLongPress;
+static clock_t lastTurnTime; //FIXME Temporary for setting a static period time
+static clock_t halfPeriodTime; //FIXME Temporary for setting a static period time
 
 /*
  * Init function which starts timers and sets the start direction
@@ -43,13 +47,16 @@ void inputInterpreterInit() {
 	initI2C3();
 	initAccelerometer();
 	//initButton();
-	lastUpdate = time(0);
-	lastHalfPeriodTime = time(0);
-	timeSinceTurn = time(0);
-	lastTurnTime = time(0); //FIXME Temporary for setting a static period time
+	lastUpdate = clock();
+	lastSpeed = 0;
+	//lastHalfPeriodTime = clock();
+	//timeSinceTurn = clock();
+
+	lastTurnTime = clock(); //FIXME Temporary for setting a static period time
 	halfPeriodTime = 20; //FIXME Temporary for setting a static period time
 	dir = 1;
 	speed = 0;
+	imageWidth = 100000;
 
 	/*
     //Restarts the accelerometer and enables X-Axis.
@@ -70,39 +77,36 @@ void inputInterpreterInit() {
 void updatePosition() {
 
 
-	SysCtlDelay(2000);
-	accelDrawer(getXAccel());
-	return;
+	//SysCtlDelay(2000);
+	//accelDrawer(getXAccel());
+	//return;
 
 
-	updateFakePosition();	//FIXME Temporary for setting a static period time
-	return;					//FIXME Temporary for setting a static period time
+	//updateFakePosition();	//FIXME Temporary for setting a static period time
+	//return;					//FIXME Temporary for setting a static period time
 	// Fetch acceleration
-	float accel = getXAccel();
+	accel = getXAccel();
+	speed = getYAccel();
 
 	// Calculate time since updatePosition was last run
-	time_t timeDiff = time(0) - lastUpdate;
+	clock_t timeDiff = clock() - lastUpdate;
 
-	// Update how much time has passed since last turn
-	timeSinceTurn += timeDiff;
+	// Update movement since last Update
+	position = position + speed / timeDiff;
 
-	// Update current speed
-	speed += accel*timeDiff;
-
-	// If direction has changed, update direction and reset timeSinceTurn
-	if (dir && speed < 0) {
-		dir = 0;
-		lastHalfPeriodTime = timeSinceTurn;
-		timeSinceTurn = 0;
-	} else if (!dir && speed > 0) {
-		dir = 1;
-		lastHalfPeriodTime = timeSinceTurn;
-		timeSinceTurn = 0;
+	// If direction has changed, update direction
+	if (((accel > 0) != (dir > 0)) && speed > lastSpeed) {
+		if (accel > 0){
+			dir = 1;
+		}
+		else {
+			dir = 0;
+		}
+		position = 0;
 	}
-	// Calculate what part of the image or message to send to the outputs
-	float position = timeSinceTurn/lastHalfPeriodTime;
+
 	// Send this position to updateImage function
-	updateImage( dir ? position : (1-position) );
+	updateImage( dir ? imageWidth/position : (1-imageWidth/position) );
 }
 
 void initButton() {
