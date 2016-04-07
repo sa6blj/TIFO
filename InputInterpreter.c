@@ -36,6 +36,7 @@ static float accel;
 static float position;
 static volatile int running;
 static float imageWidth;
+static int test;
 
 static clock_t buttonLongPress;
 static clock_t lastTurnTime; //FIXME Temporary for setting a static period time
@@ -47,7 +48,7 @@ static clock_t halfPeriodTime; //FIXME Temporary for setting a static period tim
 void inputInterpreterInit() {
 	initImageHandler();
 	initI2C3();
-	initAccelerometer();
+	initMPU_9150();
 	//initButton();
 	lastUpdate = clock();
 	lastSpeed = 0;
@@ -58,7 +59,14 @@ void inputInterpreterInit() {
 	halfPeriodTime = 20; //FIXME Temporary for setting a static period time
 	dir = 1;
 	speed = 0;
-	imageWidth = 1000;
+	imageWidth = 5000000;
+	test = getXAccel();
+	while (abs(getXAccel()) + abs(getZAccel()) > 800){
+
+		SysCtlDelay(2000);
+		accelDrawer(getXAccel()+getZAccel());
+	}
+	position = imageWidth/2;
 
 	/*
     //Restarts the accelerometer and enables X-Axis.
@@ -79,7 +87,7 @@ void inputInterpreterInit() {
 void updatePosition() {
 
 
-	SysCtlDelay(2000);
+	//SysCtlDelay(2000);
 	//accelDrawer(getZGyro());
 	//return;
 
@@ -89,14 +97,18 @@ void updatePosition() {
 	// Fetch acceleration
 	//accel = getXAccel();
 	speed = getZGyro();
+	if (abs(getXAccel()) < 400){
+		position = imageWidth/2;
+	} else {
+		position = position + speed*0.4;
+	}
+	updateImage(position/imageWidth);
 
-	// Calculate time since updatePosition was last run
 
-	//int timeDiff = 100;
-
+	/*
+	speed = getZGyro();
 	// Update movement since last Update
 	position = position + speed;
-
 	// If direction has changed, update direction
 	if ((speed > 0) && (dir == 0)){
 		dir = 1;
@@ -107,9 +119,9 @@ void updatePosition() {
 	if (position > imageWidth){
 		imageWidth = position*1.2;
 	}
-
 	// Send this position to updateImage function
 	updateImage(position/imageWidth);
+	*/
 }
 
 void initButton() {
