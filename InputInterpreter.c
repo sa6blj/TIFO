@@ -23,6 +23,8 @@
 
 static void initButton();
 static void bitSwitchUpdate();
+static void onButtonDown();
+static void onButtonUp();
 static unsigned int readBitSwitch();
 
 static clock_t lastUpdate;
@@ -67,6 +69,9 @@ void inputInterpreterInit() {
 		accelDrawer(getXAccel()+getZAccel());
 	}
 	position = imageWidth/2;
+
+	setDataReadyHandler(updatePosition);
+	setMPU_9150Interrupts(DATA_READY_INT);
 
 	/*
     //Restarts the accelerometer and enables X-Axis.
@@ -131,49 +136,53 @@ void initButton() {
 	 * 3 - D1 - NEJ!
 	 * 4 - D0 - NEJ!
 	 * 5 - E4
+	 *
+	 * Booster pack
+	 * S1 - D3
+	 * S2 - E1
 	 */
 
-	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+	//SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
 
-	while(!(SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOD)));
-	HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY;
-	HWREG(GPIO_PORTD_BASE+GPIO_O_CR) |= GPIO_PIN_7;
-	HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = 0;
+	//while(!(SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOD)));
+	//HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = GPIO_LOCK_KEY;
+	//HWREG(GPIO_PORTD_BASE+GPIO_O_CR) |= GPIO_PIN_7;
+	//HWREG(GPIO_PORTD_BASE+GPIO_O_LOCK) = 0;
 
 	//Set all pins as inputs with a weak pullup resistors
-	GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_PIN_5);
+	//GPIOPinTypeGPIOInput(GPIO_PORTB_BASE, GPIO_PIN_5);
 	//GPIOPadConfigSet(GPIO_PORTB_BASE, GPIO_PIN_5, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
-	GPIOPinTypeGPIOInput(GPIO_PORTD_BASE, GPIO_PIN_7);
-	//GPIOPadConfigSet(GPIO_PORTD_BASE, (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_7), GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
-	GPIOPinTypeGPIOInput(GPIO_PORTE_BASE, GPIO_PIN_4);
-	//GPIOPadConfigSet(GPIO_PORTE_BASE, GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+	GPIOPinTypeGPIOInput(GPIO_PORTD_BASE, GPIO_PIN_3);
+	//GPIOPadConfigSet(GPIO_PORTD_BASE, GPIO_PIN_3, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+	GPIOPinTypeGPIOInput(GPIO_PORTE_BASE, GPIO_PIN_1);
+	//GPIOPadConfigSet(GPIO_PORTE_BASE, GPIO_PIN_1, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
     //Disable interrupts
-	GPIOIntDisable(GPIO_PORTB_BASE, GPIO_PIN_5);
-	GPIOIntDisable(GPIO_PORTD_BASE, GPIO_PIN_7);
-	GPIOIntDisable(GPIO_PORTE_BASE, GPIO_PIN_4);
+	//GPIOIntDisable(GPIO_PORTB_BASE, GPIO_PIN_5);
+	GPIOIntDisable(GPIO_PORTD_BASE, GPIO_PIN_3);
+	GPIOIntDisable(GPIO_PORTE_BASE, GPIO_PIN_1);
 
 	//Clear interrupts
-	GPIOIntClear(GPIO_PORTB_BASE, GPIO_PIN_5);
-	GPIOIntClear(GPIO_PORTD_BASE, GPIO_PIN_7);
-	GPIOIntClear(GPIO_PORTE_BASE, GPIO_PIN_4);
+	//GPIOIntClear(GPIO_PORTB_BASE, GPIO_PIN_5);
+	GPIOIntClear(GPIO_PORTD_BASE, GPIO_PIN_3);
+	GPIOIntClear(GPIO_PORTE_BASE, GPIO_PIN_1);
 
 	//Set interrupt handler
-	GPIOIntRegister(GPIO_PORTB_BASE, bitSwitchUpdate);
-	GPIOIntRegister(GPIO_PORTD_BASE, bitSwitchUpdate);
-	GPIOIntRegister(GPIO_PORTE_BASE, bitSwitchUpdate);
+	//GPIOIntRegister(GPIO_PORTB_BASE, bitSwitchUpdate);
+	GPIOIntRegister(GPIO_PORTD_BASE, onButtonDown);
+	GPIOIntRegister(GPIO_PORTE_BASE, onButtonDown);
 
 	//Set the interrupt to trigger on any input change
-	GPIOIntTypeSet(GPIO_PORTB_BASE, GPIO_PIN_5,	GPIO_BOTH_EDGES);
-	GPIOIntTypeSet(GPIO_PORTD_BASE, GPIO_PIN_7,	GPIO_BOTH_EDGES);
-	GPIOIntTypeSet(GPIO_PORTE_BASE, GPIO_PIN_4,	GPIO_BOTH_EDGES);
+	//GPIOIntTypeSet(GPIO_PORTB_BASE, GPIO_PIN_5,	GPIO_BOTH_EDGES);
+	GPIOIntTypeSet(GPIO_PORTD_BASE, GPIO_PIN_3,	GPIO_BOTH_EDGES);
+	GPIOIntTypeSet(GPIO_PORTE_BASE, GPIO_PIN_1,	GPIO_BOTH_EDGES);
 
 	//Enable interrupts
-	GPIOIntEnable(GPIO_PORTB_BASE, GPIO_PIN_5);
-	GPIOIntEnable(GPIO_PORTD_BASE, GPIO_PIN_7);
-	GPIOIntEnable(GPIO_PORTE_BASE, GPIO_PIN_4);
+	//GPIOIntEnable(GPIO_PORTB_BASE, GPIO_PIN_5);
+	GPIOIntEnable(GPIO_PORTD_BASE, GPIO_PIN_3);
+	GPIOIntEnable(GPIO_PORTE_BASE, GPIO_PIN_1);
 }
 
 void updateFakePosition() {
@@ -208,17 +217,23 @@ unsigned int readBitSwitch() {
 }
 
 void onButtonDown() {
-    if (GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_PIN_0) {
+    if (GPIOIntStatus(GPIO_PORTD_BASE, false) & GPIO_PIN_3) {
         // PF0 was interrupt cause
     	buttonLongPress = time(0);
-        GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);  // Clear interrupt flag
-        //GPIOIntRegister(GPIO_PORTF_BASE, onButtonUp);   // Next interrupt will be button up
-        GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_RISING_EDGE);
+        GPIOIntClear(GPIO_PORTD_BASE, GPIO_PIN_3);  // Clear interrupt flag
+        GPIOIntRegister(GPIO_PORTD_BASE, onButtonUp);   // Next interrupt will be button up
+        GPIOIntTypeSet(GPIO_PORTD_BASE, GPIO_PIN_3, GPIO_RISING_EDGE);
+    } else if (GPIOIntStatus(GPIO_PORTE_BASE, false) & GPIO_PIN_1) {
+        // PF0 was interrupt cause
+    	buttonLongPress = time(0);
+        GPIOIntClear(GPIO_PORTE_BASE, GPIO_PIN_1);  // Clear interrupt flag
+        GPIOIntRegister(GPIO_PORTE_BASE, onButtonUp);   // Next interrupt will be button up
+        GPIOIntTypeSet(GPIO_PORTE_BASE, GPIO_PIN_1, GPIO_RISING_EDGE);
     }
 }
 
 void onButtonUp() {
-    if (GPIOIntStatus(GPIO_PORTF_BASE, false) & GPIO_PIN_0) {
+    if (GPIOIntStatus(GPIO_PORTD_BASE, false) & GPIO_PIN_3) {
         // PF0 was interrupt cause
     	if (time(0) - buttonLongPress > 1) { // If held for longer than a second it turns of the LEDs
     		updateImage(0);
@@ -228,8 +243,21 @@ void onButtonUp() {
     	} else {
     		nextImage();
     	}
-		GPIOIntClear(GPIO_PORTF_BASE, GPIO_PIN_0);  // Clear interrupt flag
-		GPIOIntRegister(GPIO_PORTF_BASE, onButtonDown); // Next interrupt will be button down
-		GPIOIntTypeSet(GPIO_PORTF_BASE, GPIO_PIN_0, GPIO_FALLING_EDGE);
+		GPIOIntClear(GPIO_PORTD_BASE, GPIO_PIN_3);  // Clear interrupt flag
+		GPIOIntRegister(GPIO_PORTD_BASE, onButtonDown); // Next interrupt will be button down
+		GPIOIntTypeSet(GPIO_PORTD_BASE, GPIO_PIN_3, GPIO_FALLING_EDGE);
+    } else if (GPIOIntStatus(GPIO_PORTE_BASE, false) & GPIO_PIN_1) {
+        // PF0 was interrupt cause
+    	if (time(0) - buttonLongPress > 1) { // If held for longer than a second it turns of the LEDs
+    		updateImage(0);
+    		running = false;
+    	} else if (!running) {
+    		running = true;
+    	} else {
+    		nextImage();
+    	}
+		GPIOIntClear(GPIO_PORTE_BASE, GPIO_PIN_1);  // Clear interrupt flag
+		GPIOIntRegister(GPIO_PORTE_BASE, onButtonDown); // Next interrupt will be button down
+		GPIOIntTypeSet(GPIO_PORTE_BASE, GPIO_PIN_1, GPIO_FALLING_EDGE);
     }
 }

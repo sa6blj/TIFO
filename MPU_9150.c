@@ -11,6 +11,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "I2Ccommunication.h"
+#include "MPU_9150.h"
 
 #define BASE_ADDRESS 0x68
 
@@ -37,9 +38,9 @@
 
 static void MPU_9150InterruptHandler();
 
-void (*fifo_overflow_int_handler)(void) = ((void*)0);
-void (*I2C_master_int_handler)(void) = ((void*)0);
-void (*data_ready_int_handler)(void) = ((void*)0);
+static void (*fifo_overflow_int_handler)(void) = ((void*)0);
+static void (*I2C_master_int_handler)(void) = ((void*)0);
+static void (*data_ready_int_handler)(void) = ((void*)0);
 
 /*
  * Sets selftest and/or sensitivity of the Accelerometer.
@@ -130,13 +131,13 @@ void setDataReadyHandler(void (*handler)(void)) {
 void MPU_9150InterruptHandler() {
 	uint8_t int_status = I2CReceiveByte(BASE_ADDRESS, INT_STATUS);
 	GPIOIntClear(GPIO_PORTB_BASE, GPIO_PIN_2);		//Clear interrupt
-	if ((fifo_overflow_int_handler!=0) && (int_status & 0x10)) {
+	if ((fifo_overflow_int_handler!=0) && (int_status & FIFO_OVERFLOW_INT)) {
 		(*fifo_overflow_int_handler)();
 	}
-	if ((I2C_master_int_handler != 0) && (int_status & 0x08)) {
+	if ((I2C_master_int_handler != 0) && (int_status & I2C_MASTER_INT)) {
 		(*I2C_master_int_handler)();
 	}
-	if ((data_ready_int_handler != 0) && (int_status & 0x01)) {
+	if ((data_ready_int_handler != 0) && (int_status & DATA_READY_INT)) {
 		(*data_ready_int_handler)();
 	}
 }

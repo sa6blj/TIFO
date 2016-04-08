@@ -8,6 +8,10 @@
 #ifndef MPU_9150_H_
 #define MPU_9150_H_
 
+#define FIFO_OVERFLOW_INT 0x10
+#define I2C_MASTER_INT 0x08
+#define DATA_READY_INT 0x01
+
 void setAccelConfig(uint8_t data);
 void setGyroConfig(uint8_t data);
 void setFifoOverflowHandler(void (*handler)(void));

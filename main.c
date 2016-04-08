@@ -25,7 +25,7 @@ int main(void) {
 	//SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN); //TODO This is probably very important
 	inputInterpreterInit();
 	while (1){
-		updatePosition();
+		//updatePosition(); //This is called by interrupts from the sensors when they have new data. Look at inputInterpreterInit() for more info.
 		//sleep(1/frequecy)
 	}
 }
