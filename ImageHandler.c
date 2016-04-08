@@ -4,12 +4,12 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
+#include "driverlib/sysctl.h"
 #include "ImageHandler.h"
 #include "OutputInterpreter.h"
 
 #define IMG_LEN (imgs[currImg][0])
-
-static void updateImgChoice();
 
 static int currImg = 1;
 static int lastIndex = 0;
@@ -88,8 +88,6 @@ void initImageHandler(){
  * Also sends the determined column to the updateOutputs function.
  */
 void updateImage(float pos) {
-	//Check for updates on image choice
-	updateImgChoice();
 
 	// Compute which column to print
 	int currIndex = pos*IMG_LEN;
@@ -126,9 +124,8 @@ void accelDrawer(int16_t val) {
 	updateOutputs(pixels);
 }
 
-void updateImgChoice() {
-	//TODO Read from ports which pins are active.
-	currImg = currImg;
+void showImgNbr() {
+	updateOutputs(currImg);
 }
 
 void nextImage() {

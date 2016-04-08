@@ -12,6 +12,7 @@
 #define I2C_MASTER_INT 0x08
 #define DATA_READY_INT 0x01
 
+void setSampleRateDivider(uint8_t data);
 void setAccelConfig(uint8_t data);
 void setGyroConfig(uint8_t data);
 void setFifoOverflowHandler(void (*handler)(void));

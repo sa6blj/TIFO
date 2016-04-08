@@ -51,7 +51,7 @@ void inputInterpreterInit() {
 	initImageHandler();
 	initI2C3();
 	initMPU_9150();
-	//initButton();
+	initButton();
 	lastUpdate = clock();
 	lastSpeed = 0;
 	//lastHalfPeriodTime = clock();
@@ -101,14 +101,16 @@ void updatePosition() {
 	//return;					//FIXME Temporary for setting a static period time
 	// Fetch acceleration
 	//accel = getXAccel();
-	speed = getZGyro();
-	if (abs(getXAccel()) < 400){
-		position = imageWidth/2;
-	} else {
-		position = position + speed*0.4;
-	}
-	updateImage(position/imageWidth);
 
+	if (running) {
+		speed = getZGyro();
+		if (abs(getXAccel()) < 400){
+			position = imageWidth/2;
+		} else {
+			position = position + speed*0.4;
+		}
+		updateImage(position/imageWidth);
+	}
 
 	/*
 	speed = getZGyro();
@@ -183,6 +185,7 @@ void initButton() {
 	//GPIOIntEnable(GPIO_PORTB_BASE, GPIO_PIN_5);
 	GPIOIntEnable(GPIO_PORTD_BASE, GPIO_PIN_3);
 	GPIOIntEnable(GPIO_PORTE_BASE, GPIO_PIN_1);
+
 }
 
 void updateFakePosition() {
@@ -254,7 +257,7 @@ void onButtonUp() {
     	} else if (!running) {
     		running = true;
     	} else {
-    		nextImage();
+    		previousImage();
     	}
 		GPIOIntClear(GPIO_PORTE_BASE, GPIO_PIN_1);  // Clear interrupt flag
 		GPIOIntRegister(GPIO_PORTE_BASE, onButtonDown); // Next interrupt will be button down
