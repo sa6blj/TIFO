@@ -38,7 +38,7 @@ static float accel;
 static float position;
 static volatile int running;
 static float imageWidth;
-static int test;
+static int offset;
 
 static clock_t buttonLongPress;
 static clock_t lastTurnTime; //FIXME Temporary for setting a static period time
@@ -61,17 +61,31 @@ void inputInterpreterInit() {
 	halfPeriodTime = 20; //FIXME Temporary for setting a static period time
 	dir = 1;
 	speed = 0;
-	imageWidth = 5000000;
-	test = getXAccel();
+	imageWidth = 1000000;
+
+	/*
+	offset = 0;
+	int i;
+	for (i = 1000; i > 0; i--){
+		offset = offset + getZGyro();
+		SysCtlDelay(10000);
+	}
+	offset = offset/1000;
+	*/
+
+	/*
 	while (abs(getXAccel()) + abs(getZAccel()) > 800){
 
 		SysCtlDelay(2000);
 		accelDrawer(getXAccel()+getZAccel());
 	}
 	position = imageWidth/2;
+	*/
 
+	setGyroConfig(0x10);
 	setDataReadyHandler(updatePosition);
 	setMPU_9150Interrupts(DATA_READY_INT);
+
 
 	/*
     //Restarts the accelerometer and enables X-Axis.
@@ -102,17 +116,21 @@ void updatePosition() {
 	// Fetch acceleration
 	//accel = getXAccel();
 
+
+	// Resets in the middle
+	/*
 	if (running) {
-		speed = getZGyro();
-		if (abs(getXAccel()) < 400){
+		speed = getZGyro() - offset;
+		if (abs(getXAccel()) < 200){
 			position = imageWidth/2;
 		} else {
-			position = position + speed*0.4;
+			position = position - speed;
 		}
 		updateImage(position/imageWidth);
 	}
+	*/
 
-	/*
+	//resests in endpositions
 	speed = getZGyro();
 	// Update movement since last Update
 	position = position + speed;
@@ -122,13 +140,12 @@ void updatePosition() {
 		position = 0;
 	} else if ((speed < 0) && (dir == 1)){
 		dir = 0;
-	}
-	if (position > imageWidth){
-		imageWidth = position*1.2;
+		imageWidth = (imageWidth + position)/2;
+
 	}
 	// Send this position to updateImage function
 	updateImage(position/imageWidth);
-	*/
+
 }
 
 void initButton() {
