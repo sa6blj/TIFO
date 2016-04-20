@@ -27,13 +27,12 @@ static void onButtonDown();
 static void onButtonUp();
 static unsigned int readBitSwitch();
 
-static clock_t lastUpdate;
-static clock_t currTime;
-//static clock_t lastHalfPeriodTime;
-//static clock_t timeSinceTurn;
+static int margin;
+static int cycleCounter;
+static int maxMargin;
+
 static int dir;
 static int16_t speed;
-static float lastSpeed;
 static float accel;
 static float position;
 static volatile int running;
@@ -42,7 +41,7 @@ static int offset;
 
 static clock_t buttonLongPress;
 static clock_t lastTurnTime; //FIXME Temporary for setting a static period time
-static clock_t halfPeriodTime; //FIXME Temporary for setting a static period time
+static int halfPeriodTime; //FIXME Temporary for setting a static period time
 
 /*
  * Init function which starts timers and sets the start direction
@@ -52,16 +51,18 @@ void inputInterpreterInit() {
 	initI2C3();
 	initMPU_9150();
 	initButton();
-	lastUpdate = clock();
-	lastSpeed = 0;
+	margin = 0;
+	maxMargin = 0;
+	cycleCounter = 0;
+	accel = 0;
 	//lastHalfPeriodTime = clock();
 	//timeSinceTurn = clock();
 
 	lastTurnTime = clock(); //FIXME Temporary for setting a static period time
-	halfPeriodTime = 20; //FIXME Temporary for setting a static period time
+	halfPeriodTime = 0; //FIXME Temporary for setting a static period time
 	dir = 1;
 	speed = 0;
-	imageWidth = 1000000;
+	imageWidth = 2000000;
 
 	/*
 	offset = 0;
@@ -81,7 +82,7 @@ void inputInterpreterInit() {
 	}
 	position = imageWidth/2;
 	*/
-
+	setAccelConfig(0x10);
 	setGyroConfig(0x10);
 	setDataReadyHandler(updatePosition);
 	setMPU_9150Interrupts(DATA_READY_INT);
@@ -107,7 +108,7 @@ void updatePosition() {
 
 
 	//SysCtlDelay(2000);
-	//accelDrawer(getZGyro());
+	//accelDrawer(getXAccel());
 	//return;
 
 
@@ -118,32 +119,53 @@ void updatePosition() {
 
 
 	// Resets in the middle
-	/*
-	if (running) {
-		speed = getZGyro() - offset;
-		if (abs(getXAccel()) < 200){
+
+		speed = getZGyro();
+		accel = getXAccel();
+		if ((speed < 0) && (dir == 0)){//changing direction if at enpositions
+			dir = 1;
+			halfPeriodTime = (cycleCounter/4);
+			cycleCounter = 0;
+		} else if ((speed > 0) && (dir == 1)){
+			dir = 0;
+			//imageWidth = (imageWidth + position*0.85)/2;
+		}
+		cycleCounter++;
+		if (((abs(accel) + abs(speed)) < 100) || halfPeriodTime == cycleCounter) {
 			position = imageWidth/2;
 		} else {
 			position = position - speed;
 		}
-		updateImage(position/imageWidth);
-	}
-	*/
 
+		updateImage(position/imageWidth);
+
+
+
+
+	/*
 	//resests in endpositions
 	speed = getZGyro();
-	// Update movement since last Update
-	position = position + speed;
-	// If direction has changed, update direction
-	if ((speed > 0) && (dir == 0)){
+
+	position = position - speed;//update position
+	cycleCounter++; //counting loops
+
+	if ((speed < 0) && (dir == 0)){//changing direction if at enpositions
 		dir = 1;
-		position = 0;
-	} else if ((speed < 0) && (dir == 1)){
+		position = -imageWidth*0.17647;
+		margin = (cycleCounter*(getXAccel()/1000));
+		cycleCounter = 0;
+	} else if ((speed > 0) && (dir == 1)){
 		dir = 0;
-		imageWidth = (imageWidth + position)/2;
+		imageWidth = (imageWidth + position*0.85)/2;
+		position = imageWidth*1.17647;
 
 	}
+	if (margin > maxMargin){
+		maxMargin = margin;
+	}
 	// Send this position to updateImage function
+	*/
+
 	updateImage(position/imageWidth);
 
 }
