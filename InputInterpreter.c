@@ -119,9 +119,10 @@ void updatePosition() {
 
 
 	// Resets in the middle
-
+	/*
 		speed = getZGyro();
 		accel = getXAccel();
+
 		if ((speed < 0) && (dir == 0)){//changing direction if at enpositions
 			dir = 1;
 			halfPeriodTime = (cycleCounter/4);
@@ -130,19 +131,22 @@ void updatePosition() {
 			dir = 0;
 			//imageWidth = (imageWidth + position*0.85)/2;
 		}
+
+
 		cycleCounter++;
-		if (((abs(accel) + abs(speed)) < 100) || halfPeriodTime == cycleCounter) {
+		//|| halfPeriodTime == cycleCounter)
+		if ((abs(accel) + abs(speed)) < 100) {
 			position = imageWidth/2;
 		} else {
 			position = position - speed;
 		}
 
 		updateImage(position/imageWidth);
+		*/
 
 
 
 
-	/*
 	//resests in endpositions
 	speed = getZGyro();
 
@@ -164,7 +168,7 @@ void updatePosition() {
 		maxMargin = margin;
 	}
 	// Send this position to updateImage function
-	*/
+
 
 	updateImage(position/imageWidth);
 
