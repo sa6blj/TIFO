@@ -27,9 +27,6 @@ static void onButtonDown();
 static void onButtonUp();
 static unsigned int readBitSwitch();
 
-static int margin;
-static int cycleCounter;
-static int maxMargin;
 
 static int dir;
 static int16_t speed;
@@ -37,7 +34,6 @@ static float accel;
 static float position;
 static volatile int running;
 static float imageWidth;
-static int offset;
 
 static clock_t buttonLongPress;
 static clock_t lastTurnTime; //FIXME Temporary for setting a static period time
@@ -51,9 +47,6 @@ void inputInterpreterInit() {
 	initI2C3();
 	initMPU_9150();
 	initButton();
-	margin = 0;
-	maxMargin = 0;
-	cycleCounter = 0;
 	accel = 0;
 	//lastHalfPeriodTime = clock();
 	//timeSinceTurn = clock();
@@ -64,24 +57,7 @@ void inputInterpreterInit() {
 	speed = 0;
 	imageWidth = 2000000;
 
-	/*
-	offset = 0;
-	int i;
-	for (i = 1000; i > 0; i--){
-		offset = offset + getZGyro();
-		SysCtlDelay(10000);
-	}
-	offset = offset/1000;
-	*/
 
-	/*
-	while (abs(getXAccel()) + abs(getZAccel()) > 800){
-
-		SysCtlDelay(2000);
-		accelDrawer(getXAccel()+getZAccel());
-	}
-	position = imageWidth/2;
-	*/
 	setAccelConfig(0x10);
 	setGyroConfig(0x10);
 	setDataReadyHandler(updatePosition);
@@ -118,7 +94,7 @@ void updatePosition() {
 	//accel = getXAccel();
 
 
-	// Resets in the middle
+	// Resets in the middle //FIXME Scrapped version of the interpreter
 	/*
 		speed = getZGyro();
 		accel = getXAccel();
@@ -148,28 +124,23 @@ void updatePosition() {
 
 
 	//resests in endpositions
-	speed = getZGyro();
+
+
+	speed = getZGyro(); //get angular velocity
 
 	position = position - speed;//update position
-	cycleCounter++; //counting loops
 
 	if ((speed < 0) && (dir == 0)){//changing direction if at enpositions
 		dir = 1;
-		position = -imageWidth*0.17647;
-		margin = (cycleCounter*(getXAccel()/1000));
-		cycleCounter = 0;
+		position = -imageWidth*0.17647; // resets position
 	} else if ((speed > 0) && (dir == 1)){
 		dir = 0;
-		imageWidth = (imageWidth + position*0.85)/2;
-		position = imageWidth*1.17647;
+		imageWidth = (imageWidth + position*0.85)/2;//calculate new imagewidth based on position
+		position = imageWidth*1.17647; //resets position
 
 	}
-	if (margin > maxMargin){
-		maxMargin = margin;
-	}
+
 	// Send this position to updateImage function
-
-
 	updateImage(position/imageWidth);
 
 }
