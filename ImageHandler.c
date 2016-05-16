@@ -5,14 +5,20 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 #include "driverlib/sysctl.h"
 #include "ImageHandler.h"
 #include "OutputInterpreter.h"
 
+#define SHOW_IMG_INDEX_TIME_MS 2000
+
 #define IMG_LEN (imgs[currImg][0])
 
-static int currImg = 16;
+static int currImg = 18;
 static int lastIndex = 0;
+
+static int boolShowingIndex = false;
+static int timeShowingIndex = 0;
 
 #define NUM_IMAGES 22
 
@@ -134,6 +140,14 @@ void initImageHandler(){
  * Also sends the determined column to the updateOutputs function.
  */
 void updateImage(float pos) {
+	if (boolShowingIndex) {
+		if (--timeShowingIndex < 1) {
+			boolShowingIndex = false;
+		} else {
+			updateOutputs(currImg);
+			return;
+		}
+	}
 
 	// Compute which column to print
 	int currIndex = pos*IMG_LEN;
@@ -170,10 +184,17 @@ void accelDrawer(int16_t val) {
 	updateOutputs(pixels);
 }
 
+void showImgNumber() {
+	boolShowingIndex = true;
+	timeShowingIndex = SHOW_IMG_INDEX_TIME_MS;
+}
+
 void nextImage() {
 	currImg = (currImg+1)%NUM_IMAGES;
+	showImgNumber();
 }
 
 void previousImage() {
 	currImg = (currImg+NUM_IMAGES-1)%NUM_IMAGES;
+	showImgNumber();
 }
